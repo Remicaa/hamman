@@ -15,7 +15,7 @@
 		qcom,mdss-dsi-panel-name = "tianma r63350 1080p video mode dsi panel";
 		qcom,mdss-dsi-panel-type = "dsi_video_mode";
 		qcom,mdss-dsi-panel-id = <4>;
-		qcom,mdss-dsi-panel-framerate = <60>;
+		qcom,mdss-dsi-panel-framerate = <82>;
 		qcom,mdss-dsi-virtual-channel-id = <0>;
 		qcom,mdss-dsi-stream = <0>;
 		qcom,mdss-dsi-panel-width = <1080>;
@@ -48,7 +48,7 @@
 		qcom,mdss-dsi-t-clk-pre = <0x30>;
 		qcom,mdss-dsi-bl-min-level = <1>;
 		qcom,mdss-dsi-bl-max-level = <4095>;
-		//qcom,mdss-brightness-max-level = <4095>;
+		qcom,mdss-brightness-max-level = <4095>;
 		qcom,mdss-dsi-dma-trigger = "trigger_sw";
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-on-command = [
@@ -82,8 +82,8 @@
 		qcom,mdss-pan-physical-width-dimension = <80>;
 		qcom,mdss-pan-physical-height-dimension = <142>;
 		qcom,mdss-night-brightness = <9 27 44 62>;
-		qcom,mdss-dsi-min-refresh-rate = <55>;
-		qcom,mdss-dsi-max-refresh-rate = <60>;
+		qcom,mdss-dsi-min-refresh-rate = <24>;
+		qcom,mdss-dsi-max-refresh-rate = <82>;
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
 		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_porch_mode_vfp";
 		qcom,mdss-dsi-panel-timings-phy-v2 = [24 1f 08 09 05 03 04 a0
