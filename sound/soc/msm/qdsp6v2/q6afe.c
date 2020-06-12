@@ -341,6 +341,15 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 		if (sp_make_afe_callback(data->payload, data->payload_size))
 			return -EINVAL;
 
+#ifdef SMART_AMP
+		if (payload_sa[1] == AFE_SMARTAMP_MODULE) {
+			memcpy(&this_afe.smart_amp_calib_data, payload,
+				sizeof(this_afe.smart_amp_calib_data));
+			atomic_set(&this_afe.state, 0);
+			pr_debug("SAMP inside !this_afe.smart_amp_calib_data.status");
+		}
+#endif
+
 		if (afe_token_is_valid(data->token))
 			wake_up(&this_afe.wait[data->token]);
 		else
