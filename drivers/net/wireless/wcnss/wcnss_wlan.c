@@ -1,4 +1,5 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2016, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1120,7 +1121,7 @@ void wcnss_log_debug_regs_on_bite(void)
 		pr_debug("wcnss: clock frequency is: %luHz\n", clk_rate);
 
 		if (clk_rate) {
-			wcnss_pronto_log_debug_regs();
+			wcnss_pronto_dump_regs();
 			if (wcnss_get_mux_control())
 				wcnss_log_iris_regs();
 		} else {
@@ -1140,7 +1141,7 @@ void wcnss_reset_fiq(bool clk_chk_en)
 		if (clk_chk_en) {
 			wcnss_log_debug_regs_on_bite();
 		} else {
-			wcnss_pronto_log_debug_regs();
+			wcnss_pronto_dump_regs();
 			if (wcnss_get_mux_control())
 				wcnss_log_iris_regs();
 		}
@@ -3349,11 +3350,11 @@ static ssize_t wcnss_wlan_write(struct file *fp, const char __user
 	if (!penv->user_cal_rcvd && count >= 4 && !penv->user_cal_exp_size) {
 		mutex_lock(&penv->dev_lock);
 		rc = copy_from_user((void *)&penv->user_cal_exp_size,
-				    user_buffer, 4);
+					user_buffer, 4);
 		if (!penv->user_cal_exp_size ||
 		    penv->user_cal_exp_size > MAX_CALIBRATED_DATA_SIZE) {
 			pr_err(DEVICE " invalid size to write %d\n",
-			       penv->user_cal_exp_size);
+					penv->user_cal_exp_size);
 			penv->user_cal_exp_size = 0;
 			mutex_unlock(&penv->dev_lock);
 			return -EFAULT;
@@ -3382,7 +3383,7 @@ static ssize_t wcnss_wlan_write(struct file *fp, const char __user
 	rc = copy_from_user(cal_data, user_buffer, count);
 	if (!rc) {
 		memcpy(penv->user_cal_data + penv->user_cal_rcvd,
-		       cal_data, count);
+				cal_data, count);
 		penv->user_cal_rcvd += count;
 		rc += count;
 	}

@@ -1,4 +1,5 @@
 /* Copyright (c) 2008-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2017 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -387,27 +388,6 @@ static uint32_t diag_translate_kernel_to_user_mask(uint32_t peripheral_mask)
 	return ret;
 }
 
-void diag_clear_masks(struct diag_md_session_t *info)
-{
-	int ret;
-	char cmd_disable_log_mask[] = { 0x73, 0, 0, 0, 0, 0, 0, 0};
-	char cmd_disable_msg_mask[] = { 0x7D, 0x05, 0, 0, 0, 0, 0, 0};
-	char cmd_disable_event_mask[] = { 0x60, 0};
-
-	DIAG_LOG(DIAG_DEBUG_PERIPHERALS,
-	"diag: %s: masks clear request upon %s\n", __func__,
-	((info) ? "ODL exit" : "USB Disconnection"));
-
-	ret = diag_process_apps_masks(cmd_disable_log_mask,
-			sizeof(cmd_disable_log_mask), info);
-	ret = diag_process_apps_masks(cmd_disable_msg_mask,
-			sizeof(cmd_disable_msg_mask), info);
-	ret = diag_process_apps_masks(cmd_disable_event_mask,
-			sizeof(cmd_disable_event_mask), info);
-	DIAG_LOG(DIAG_DEBUG_PERIPHERALS,
-	"diag:%s: masks cleared successfully\n", __func__);
-}
-
 static void diag_close_logging_process(const int pid)
 {
 	int i;
@@ -418,12 +398,6 @@ static void diag_close_logging_process(const int pid)
 	session_info = diag_md_session_get_pid(pid);
 	if (!session_info)
 		return;
-
-	diag_clear_masks(session_info);
-
-	mutex_lock(&driver->diag_maskclear_mutex);
-	driver->mask_clear = 1;
-	mutex_unlock(&driver->diag_maskclear_mutex);
 
 	session_peripheral_mask = session_info->peripheral_mask;
 	diag_md_session_close(session_info);
@@ -500,14 +474,9 @@ static int diag_remove_client_entry(struct file *file)
 }
 static int diagchar_close(struct inode *inode, struct file *file)
 {
-	int ret;
 	DIAG_LOG(DIAG_DEBUG_USERSPACE, "diag: process exit %s\n",
 		current->comm);
-	ret = diag_remove_client_entry(file);
-	mutex_lock(&driver->diag_maskclear_mutex);
-	driver->mask_clear = 0;
-	mutex_unlock(&driver->diag_maskclear_mutex);
-	return ret;
+	return diag_remove_client_entry(file);
 }
 
 void diag_record_stats(int type, int flag)
@@ -953,11 +922,6 @@ static int diag_send_raw_data_remote(int proc, void *buf, int len,
 		hdlc_disabled = driver->hdlc_disabled;
 	if (hdlc_disabled) {
 		payload = *(uint16_t *)(buf + 2);
-		if (payload > DIAG_MAX_HDLC_BUF_SIZE) {
-			pr_err("diag: Dropping packet, payload size is %d\n",
-				payload);
-			return -EBADMSG;
-		}
 		driver->hdlc_encode_buf_len = payload;
 		/*
 		 * Adding 4 bytes for start (1 byte), version (1 byte) and
@@ -2189,7 +2153,9 @@ long diagchar_ioctl(struct file *filp,
 		mutex_unlock(&driver->dci_mutex);
 		break;
 	case DIAG_IOCTL_DCI_EVENT_STATUS:
+		mutex_lock(&driver->dci_mutex);
 		result = diag_ioctl_dci_event_status(ioarg);
+		mutex_unlock(&driver->dci_mutex);
 		break;
 	case DIAG_IOCTL_DCI_CLEAR_LOGS:
 		mutex_lock(&driver->dci_mutex);
@@ -3391,10 +3357,10 @@ static int __init diagchar_init(void)
 	non_hdlc_data.len = 0;
 	mutex_init(&driver->hdlc_disable_mutex);
 	mutex_init(&driver->diagchar_mutex);
-	mutex_init(&driver->diag_maskclear_mutex);
 	mutex_init(&driver->diag_file_mutex);
 	mutex_init(&driver->delayed_rsp_mutex);
 	mutex_init(&apps_data_mutex);
+	mutex_init(&driver->hdlc_recovery_mutex);
 	for (i = 0; i < NUM_PERIPHERALS; i++)
 		mutex_init(&driver->diagfwd_channel_mutex[i]);
 	init_waitqueue_head(&driver->wait_q);
